@@ -28,6 +28,7 @@ class milestone1(QMainWindow):
         self.loadStateList()
         self.ui.stateList.currentTextChanged.connect(self.stateChanged)
         self.ui.cityList.itemSelectionChanged.connect(self.cityChanged)
+        self.ui.zipcodeList.currentTextChanged.connect(self.zipcodeChanged)
         self.ui.bname.textChanged.connect(self.getBusinessNames)
         self.ui.businesses.itemSelectionChanged.connect(self.displayBusinessCity)
 
@@ -58,6 +59,7 @@ class milestone1(QMainWindow):
 
     def stateChanged(self):
         self.ui.cityList.clear()
+        self.ui.zipcodeList.clear()
         state = self.ui.stateList.currentText()
         if (self.ui.stateList.currentIndex()>=0):
             sql_str = "SELECT distinct city FROM business WHERE state ='" + state + "' ORDER BY city;"
@@ -94,8 +96,35 @@ class milestone1(QMainWindow):
         if (self.ui.stateList.currentIndex() >= 0) and (len(self.ui.cityList.selectedItems()) > 0):
             state = self.ui.stateList.currentText()
             city = self.ui.cityList.selectedItems()[0].text()
-            sql_str = "SELECT name, city, state FROM business  WHERE state = '" + state + "' AND city='" + city + "' ORDER BY name ;"
-            results = self.executeQuery(sql_str)
+
+            zipcode_sql = "SELECT DISTINCT postal_code FROM business WHERE state = '" + state + "' AND city = '" + city + "' ORDER BY postal_code;"
+            try:
+                zipcodeResults = self.executeQuery(zipcode_sql)
+                self.ui.zipcodeList.blockSignals(True)
+                self.ui.zipcodeList.clear()
+                self.ui.zipcodeList.addItem("All Zipcodes")
+                for row in zipcodeResults:
+                    self.ui.zipcodeList.addItem(row[0])
+                self.ui.zipcodeList.setCurrentIndex(0)
+                self.ui.zipcodeList.blockSignals(False)
+            except:
+                print("Zipcode query failed!")
+
+            self.refreshBusinessTable()
+
+    def refreshBusinessTable(self):
+        if (self.ui.stateList.currentIndex() >= 0) and (len(self.ui.cityList.selectedItems()) > 0):
+            state = self.ui.stateList.currentText()
+            city = self.ui.cityList.selectedItems()[0].text()
+            zipcode = self.ui.zipcodeList.currentText()
+
+            sql_str = "SELECT name, city, state FROM business WHERE state = '" + state + "' AND city = '" + city + "'"
+
+            if zipcode != "" and zipcode != "All Zipcodes":
+                sql_str += " AND postal_code = '" + zipcode + "'"
+
+            sql_str += " ORDER BY name;"
+
             try:
                 results = self.executeQuery(sql_str)
                 style = "::section {" "background-color: #f3f3f3; }"
@@ -107,13 +136,17 @@ class milestone1(QMainWindow):
                 self.ui.businessTable.setColumnWidth(0, 300)
                 self.ui.businessTable.setColumnWidth(1, 100)
                 self.ui.businessTable.setColumnWidth(2, 50)
+
                 currentRowCount = 0
                 for row in results:
                     for colCount in range(0, len(results[0])):
-                        self.ui.businessTable.setItem(currentRowCount, colCount, QTableWidgetItem(row[colCount]))
+                        self.ui.businessTable.setItem(currentRowCount, colCount, QTableWidgetItem(str(row[colCount])))
                     currentRowCount += 1
             except:
                 print("Query failed!")
+
+    def zipcodeChanged(self):
+        self.refreshBusinessTable()
 
     def getBusinessNames(self):
         self.ui.businesses.clear()
