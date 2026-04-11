@@ -1,0 +1,9 @@
+SELECT COUNT(*) FROM business; -- 11481
+SELECT COUNT(*) FROM business_category; -- 33619
+SELECT COUNT(*) FROM business_hours; -- 55502
+SELECT COUNT(*) FROM business_attribute; -- 227536
+SELECT COUNT(*) FROM checkin; -- 481360
+SELECT COUNT(*) FROM yelp_user; -- 192999
+SELECT COUNT(*) FROM user_elite; -- 68046
+SELECT COUNT(*) FROM user_friend; -- 1052706
+SELECT COUNT(*) FROM review; -- 416479
